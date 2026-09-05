@@ -106,6 +106,17 @@ PostgreSQL
 ```
 
 The current baseline adds Spring Boot and persistence infrastructure without adding controllers, use cases, or persistence adapters yet.
+The source tree now contains the initial architecture skeleton under `org.ikigaidigital`:
+
+- `domain` for Spring/JPA-free business-facing models
+- `application.port.in` for the two use-case contracts
+- `application.port.out` for the persistence boundary used by application services
+- `application.service` for minimal use-case skeletons
+- `adapter.in.rest` for API response DTOs and mapping boundaries
+- `adapter.out.persistence` for the persistence adapter boundary
+
+The skeleton does not yet expose REST controllers or implement JPA persistence behavior.
+The protected legacy `TimeDeposit` and `TimeDepositCalculator.updateBalance` contract remains unchanged.
 
 ## Database
 

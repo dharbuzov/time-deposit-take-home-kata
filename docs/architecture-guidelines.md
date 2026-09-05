@@ -67,6 +67,28 @@ The database schema must stay consistent with `docs/erd.puml`.
 Persistence infrastructure belongs outside the domain. Database configuration, migrations,
 JPA mappings, and repository implementations must not leak into domain classes.
 
+## Current Package Skeleton
+
+The Kotlin implementation uses this lightweight package layout under `org.ikigaidigital`:
+
+```text
+domain/
+application/
+  port/
+    in/
+    out/
+  service/
+adapter/
+  in/
+    rest/
+  out/
+    persistence/
+```
+
+The current skeleton establishes dependency direction only. REST controllers, JPA entity
+mappings, repository queries, and full balance-update orchestration are intentionally
+deferred to later implementation steps.
+
 ## Money
 
 Use `BigDecimal` for all monetary values.
