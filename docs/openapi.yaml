@@ -45,10 +45,9 @@ components:
           example: 1
         planType:
           type: string
-          example: PREMIUM
+          example: premium
         balance:
           type: number
-          format: double
           example: 1050.00
         days:
           type: integer
@@ -72,7 +71,6 @@ components:
           example: 10
         amount:
           type: number
-          format: double
           example: 100.00
         date:
           type: string

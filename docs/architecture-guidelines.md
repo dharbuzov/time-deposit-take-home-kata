@@ -138,6 +138,23 @@ When discussing scale, first identify:
 
 Scale vertically and with database/index/query improvements before adding distributed-system complexity.
 
+## Security
+
+Security first, but complexity must be justified.
+
+- Keep the dependency surface minimal.
+- Prefer Spring Boot BOM-managed dependency versions.
+- Review dependency, build, infrastructure, API-boundary, and persistence changes for security impact.
+- Use OWASP Dependency-Check and Maven dependency tree analysis for dependency vulnerability management.
+- Keep secrets and environment-specific configuration out of source control.
+- Validate untrusted input at system boundaries.
+- Use safe, parameterized persistence access.
+- Avoid logging secrets or exposing unnecessary internal exception details through APIs.
+- Use least privilege where practical for database and runtime access.
+
+Do not add service mesh, WAF, Vault, SIEM, external IAM platforms, or dedicated security
+infrastructure unless explicit requirements justify the complexity.
+
 ## Legacy Behavior
 
 `TimeDepositCalculator.updateBalance` is protected existing behavior.

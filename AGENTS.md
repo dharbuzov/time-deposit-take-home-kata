@@ -134,6 +134,32 @@ Do not migrate build tools or add dependencies for stylistic reasons.
 
 Before adding a dependency, verify that the same result cannot be achieved clearly with the existing stack.
 
+## Security First
+
+Security is part of the normal engineering workflow.
+
+- Never commit credentials, tokens, secrets, or private keys.
+- Do not hardcode production credentials; use environment-based configuration.
+- Minimize new dependencies and inspect dependency impact when adding or upgrading libraries.
+- Prefer Spring Boot/BOM-managed dependency versions.
+- Review High and Critical vulnerability findings explicitly.
+- Do not suppress findings without documented technical justification.
+- Run the Maven security scan after dependency or build changes.
+- Preserve characterized business behavior during security fixes.
+- Validate untrusted input at system boundaries where applicable.
+- Use safe, parameterized persistence access.
+- Do not expose secrets or unnecessary internal exception details through APIs or logs.
+- Use least privilege where practical.
+- Do not introduce heavyweight security infrastructure without a concrete requirement.
+
+Run security and regression checks from `kotlin/`:
+
+```bash
+./mvnw dependency:tree
+./mvnw dependency-check:check
+./mvnw clean test
+```
+
 ## Documentation
 
 Keep documentation lightweight and synchronized with the implementation:

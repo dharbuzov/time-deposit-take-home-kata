@@ -10,6 +10,7 @@ Implementation of the XA Bank Time Deposit take-home assignment.
 - [Architecture](#architecture)
 - [Database](#database)
 - [Testing](#testing)
+- [Security](#security)
 - [AI-Assisted Development](#ai-assisted-development)
 - [Scope](#scope)
 
@@ -132,6 +133,38 @@ H2 is not used as a persistence substitute.
 
 The Testcontainers bootstrap test runs against real PostgreSQL when Docker is available.
 If Docker is unavailable, that infrastructure test is skipped by Testcontainers.
+
+## Security
+
+Security is treated as part of the regular build workflow.
+
+Dependency hygiene is checked with OWASP Dependency-Check:
+
+```bash
+cd kotlin
+./mvnw dependency-check:check
+```
+
+The generated reports are written under `kotlin/target/`, including:
+
+- `kotlin/target/dependency-check-report.html`
+- `kotlin/target/dependency-check-report.json`
+
+Use Maven's dependency tree to identify whether a finding comes from a direct dependency,
+a transitive dependency, a test-only dependency, or a build/plugin dependency:
+
+```bash
+cd kotlin
+./mvnw dependency:tree
+```
+
+High and Critical findings must be reviewed explicitly. Prefer Spring Boot BOM-managed
+versions and compatible patch/minor upgrades before adding narrow dependency overrides.
+Suppressions are allowed only for confirmed false positives or non-applicable findings,
+and each suppression must include a documented technical justification.
+
+Runtime credentials and database configuration are supplied through environment variables.
+Do not commit secrets, tokens, private keys, or production credentials.
 
 ## AI-Assisted Development
 
