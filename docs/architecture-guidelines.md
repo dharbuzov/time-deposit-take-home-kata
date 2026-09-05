@@ -25,6 +25,7 @@ Dependencies point inward. Domain code must not depend on Spring, HTTP, JPA, or 
 Business rules belong in the domain.
 
 Interest calculation should be extensible. Prefer a **Strategy / Policy** approach instead of growing conditional blocks.
+Plan-specific interest rules are implemented as explicit, framework-independent policies.
 
 Adding a new plan type should require minimal changes to existing code.
 

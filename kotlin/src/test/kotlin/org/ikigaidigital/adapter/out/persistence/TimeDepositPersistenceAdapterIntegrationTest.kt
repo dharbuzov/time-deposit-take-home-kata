@@ -27,7 +27,7 @@ class TimeDepositPersistenceAdapterIntegrationTest {
     @BeforeEach
     fun cleanDatabase() {
         jdbcTemplate.update("DELETE FROM withdrawals")
-        jdbcTemplate.update("DELETE FROM timeDeposits")
+        jdbcTemplate.update("DELETE FROM \"timeDeposits\"")
     }
 
     @Test

@@ -1,6 +1,8 @@
 package org.ikigaidigital
 
 import org.assertj.core.api.Assertions.assertThat
+import org.ikigaidigital.domain.TimeDeposit
+import org.ikigaidigital.domain.TimeDepositCalculator
 import org.junit.jupiter.api.Test
 
 class TimeDepositCalculatorTest {
@@ -150,5 +152,20 @@ class TimeDepositCalculatorTest {
         calculator.updateBalance(listOf(deposit))
 
         assertThat(deposit.balance).isEqualTo(1207.01)
+    }
+
+    @Test
+    fun `updates multiple deposits in one call`() {
+        val basic = TimeDeposit(1, "basic", 1200.00, 31)
+        val student = TimeDeposit(2, "student", 1200.00, 365)
+        val premium = TimeDeposit(3, "premium", 1200.00, 46)
+        val unknown = TimeDeposit(4, "gold", 1200.00, 46)
+
+        calculator.updateBalance(listOf(basic, student, premium, unknown))
+
+        assertThat(basic.balance).isEqualTo(1201.00)
+        assertThat(student.balance).isEqualTo(1203.00)
+        assertThat(premium.balance).isEqualTo(1205.00)
+        assertThat(unknown.balance).isEqualTo(1200.00)
     }
 }
