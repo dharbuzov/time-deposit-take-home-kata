@@ -8,3 +8,5 @@ __pycache__/
 .idea/
 package-lock.json
 .vscode/
+.mvn/wrapper/dists/
+kotlin/.mvn/wrapper/dists/

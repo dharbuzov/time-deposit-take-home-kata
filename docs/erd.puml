@@ -7,7 +7,7 @@ skinparam linetype ortho
 entity "timeDeposits" as timeDeposits {
     * id : INTEGER <<PK>>
     --
-    * plan_type : VARCHAR
+    * planType : VARCHAR
     * days : INTEGER
     * balance : DECIMAL
 }
@@ -15,7 +15,7 @@ entity "timeDeposits" as timeDeposits {
 entity "withdrawals" as withdrawals {
     * id : INTEGER <<PK>>
     --
-    * time_deposit_id : INTEGER <<FK>>
+    * timeDepositId : INTEGER <<FK>>
     * amount : DECIMAL
     * date : DATE
 }

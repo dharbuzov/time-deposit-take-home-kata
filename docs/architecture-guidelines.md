@@ -51,17 +51,21 @@ Use OpenAPI / Swagger.
 
 ## Persistence
 
-Use PostgreSQL with explicit migrations.
+Use PostgreSQL with explicit Flyway migrations.
 
 Prefer:
 
 - JPA / Spring Data in the persistence adapter
 - Flyway for schema migrations
 - Testcontainers for integration tests
+- Docker Compose for the local application and PostgreSQL runtime
 
 Do not expose JPA entities or Spring Data repositories to the domain.
 
 The database schema must stay consistent with `docs/erd.puml`.
+
+Persistence infrastructure belongs outside the domain. Database configuration, migrations,
+JPA mappings, and repository implementations must not leak into domain classes.
 
 ## Money
 
@@ -163,6 +167,21 @@ Pay special attention to business boundaries such as:
 - 1 year
 
 For concurrency-sensitive code, test the invariant rather than implementation details.
+
+Unit and characterization tests must not require PostgreSQL, Docker, Spring context startup,
+or other infrastructure. Persistence integration tests should use real PostgreSQL through
+Testcontainers and real Flyway migrations.
+
+## Build Reproducibility
+
+Use Maven with the repository Maven Wrapper for reproducible local and CI builds.
+
+Expected project commands are run from `kotlin/`:
+
+```bash
+./mvnw clean test
+./mvnw spring-boot:run
+```
 
 ## Engineering Principles
 
