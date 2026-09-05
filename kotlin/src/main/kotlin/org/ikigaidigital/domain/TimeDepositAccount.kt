@@ -5,7 +5,7 @@ import java.math.BigDecimal
 /**
  * Domain-facing representation for persisted time deposit data.
  *
- * This is separate from the protected legacy org.ikigaidigital.TimeDeposit class,
+ * This is separate from the protected legacy TimeDeposit class,
  * which remains the compatibility contract for the existing calculator.
  */
 data class TimeDepositAccount(

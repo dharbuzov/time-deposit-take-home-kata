@@ -86,9 +86,9 @@ adapter/
     persistence/
 ```
 
-The current implementation includes the outbound Spring Data JPA persistence adapter.
-REST controllers and full balance-update orchestration are intentionally deferred to
-later implementation steps.
+The current implementation includes the outbound Spring Data JPA persistence adapter
+and application services for the two use cases. REST controllers are intentionally
+deferred to a later implementation step.
 
 ## Money
 

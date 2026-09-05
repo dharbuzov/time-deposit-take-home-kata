@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component
 class TimeDepositPersistenceAdapter(
     private val timeDepositRepository: TimeDepositJpaRepository
 ) : TimeDepositPersistencePort {
+
     override fun findAllWithWithdrawals(): List<TimeDepositAccount> =
         timeDepositRepository.findAllByOrderByIdAsc()
             .map(TimeDepositPersistenceMapper::toDomain)

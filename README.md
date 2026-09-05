@@ -114,7 +114,7 @@ The source tree now contains the initial architecture skeleton under `org.ikigai
 - `adapter.in.rest` for API response DTOs and mapping boundaries
 - `adapter.out.persistence` for JPA persistence entities, repositories, mapping, and the outbound adapter
 
-The implementation does not yet expose REST controllers or implement balance-update orchestration.
+The implementation does not yet expose REST controllers.
 The protected legacy `TimeDeposit` and `TimeDepositCalculator.updateBalance` contract remains unchanged.
 
 ## Database
@@ -130,6 +130,7 @@ The schema is based on `docs/erd.puml`.
 
 The outbound persistence adapter uses Spring Data JPA with persistence-specific entities.
 JPA mappings explicitly preserve the required mixed-case table and column names from the assignment.
+Updating all time deposit balances is orchestrated by the application service inside one Spring transaction.
 
 ## Testing
 
@@ -137,6 +138,7 @@ The test suite contains:
 
 - Characterization tests protecting existing `TimeDepositCalculator.updateBalance` behavior
 - Persistence adapter integration tests using PostgreSQL Testcontainers and Flyway
+- Application use-case integration tests covering get-all, update-all, and rollback behavior
 - A minimal Spring Boot/Testcontainers integration test that verifies:
   - Spring context startup
   - PostgreSQL container startup
