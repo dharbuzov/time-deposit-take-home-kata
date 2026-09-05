@@ -1,72 +1,236 @@
-# Time Deposit Refactoring Kata - Take-Home Assignment
+# XA Bank Time Deposit
 
-## XA Bank Time Deposit
+Implementation of the XA Bank Time Deposit take-home assignment.
 
-### Context
-A junior developer implemented domain logic for a time deposit system but did not complete the API functionality. Your task is to refactor the existing codebase to implement all required functionalities based on the provided business requirements, ensuring no breaking changes occur.
+## Tech Stack
 
-### Requirements
+- Kotlin
+- Spring Boot
+- Maven
+- PostgreSQL
+- Flyway
+- Testcontainers
+- OpenAPI 3
 
-1. **API Endpoints**:
-    - Create a RESTful API endpoint to update the balances of all time deposits in the database.
-    - Create a RESTful API endpoint to retrieve all time deposits.
-        - The GET endpoint should return a list of all time deposits with the following schema:
-            - `id`
-            - `planType`
-            - `balance`
-            - `days`
-            - `withdrawals`
+## Getting Started
 
-2. **Database Setup**:
-    - Store all time deposit plans in a database.
-    - Define the following tables:
-        - `timeDeposits`:
-            - `id`: Integer (primary key)
-            - `planType`: String (required)
-            - `days`: Integer (required)
-            - `balance`: Decimal (required)
-        - `withdrawals`:
-            - `id`: Integer (primary key)
-            - `timeDepositId`: Integer (foreign key, required)
-            - `amount`: Decimal (required)
-            - `date`: Date (required)
+### Prerequisites
 
-3. **Interest Calculation**:
-    - Implement logic to calculate monthly interest based on the plan type:
-        - **Basic Plan**: 1% interest
-        - **Student Plan**: 3% interest (no interest after 1 year)
-        - **Premium Plan**: 5% interest (interest starts after 45 days)
-    - No interest is applied for the first 30 days for any existing plans.
+- JDK 21+
+- Docker
 
-4. **Refactoring Constraints**:
-    - Do not introduce breaking changes to the shared `TimeDeposit` class or modify the `updateBalance` method signature.
-    - Ensure the design is extensible to accommodate future complexities in interest calculations.
+### Run Tests
 
-5. **Code Quality**:
-    - Adhere to SOLID principles, design patterns, and clean code practices where applicable.
+```bash
+./mvnw test
+```
 
-6. **AI-Assisted Development**:
-    - Set up an AI harness or agent workflow and use it throughout the development for this take-home exercise.
-    - Briefly document the tools and setup used (e.g., LLMs, coding assistants, agentic frameworks, configuration).
-    - Ensure your AI setup is practical and reproducible.
-    - Include any custom rules, system prompts, or agent configurations used.
-    - Include a brief summary of which parts of the solution were AI-assisted and why.
+### Run Application
 
-### Important Guidelines
-- The existing `TimeDepositCalculator.updateBalance` method is functioning correctly. Ensure its behavior remains unchanged after refactoring.
-- The final solution must include **exactly two API endpoints**. Do not develop additional endpoints.
-- **Do not** create a pull request or a new branch in the ikigai-digital repository. Instead, fork the repository into your own GitHub repository and develop the solution there.
-- Handling invalid input or exceptions is not required.
-- Use any tools, frameworks, or libraries you find suitable.
-- In case of ambiguity, make logical assumptions and justify them in code comments.
+```bash
+./mvnw spring-boot:run
+```
 
-### Preferred Stack
-- Use an OpenAPI Swagger contract.
-- Embrace Hexagonal Architecture.
-- Follow atomic commit practices.
-- Utilize testcontainers.
-- Leverage AI-assisted development tools for code generation, testing, and refactoring.
+## API
 
-### Submission Instructions
-- Provide clear instructions on how to trigger the endpoints using the Swagger contract.
-- Email the link to your public GitHub repository.
+The application follows an **API-first** approach.
+
+The OpenAPI contract is the source of truth for the public REST API and is available at:
+
+`docs/openapi.yaml`
+
+The application exposes exactly two business endpoints.
+
+### Get All Time Deposits
+
+```http
+GET /time-deposits
+```
+
+Example response:
+
+```json
+[
+  {
+    "id": 1,
+    "planType": "PREMIUM",
+    "balance": 1050.00,
+    "days": 60,
+    "withdrawals": [
+      {
+        "id": 10,
+        "amount": 100.00,
+        "date": "2026-09-01"
+      }
+    ]
+  }
+]
+```
+
+### Update All Time Deposit Balances
+
+```http
+POST /time-deposits/balances
+```
+
+Successful response:
+
+```text
+204 No Content
+```
+
+## Architecture
+
+The application uses a lightweight **Hexagonal Architecture**.
+
+```text
+REST Adapter
+     ↓
+Application / Use Cases
+     ↓
+Domain
+     ↑
+Repository Port
+     ↑
+Persistence Adapter
+     ↓
+PostgreSQL
+```
+
+Business logic is kept independent from HTTP, Spring, JPA, and persistence implementation details.
+
+Architecture guidelines:
+
+`docs/architecture-guidelines.md`
+
+Database model:
+
+`docs/erd.puml`
+
+## Interest Rules
+
+| Plan | Interest | Conditions |
+| --- | ---: | --- |
+| Basic | 1% | No interest during the first 30 days |
+| Student | 3% | No interest during the first 30 days and no interest after 1 year |
+| Premium | 5% | Interest starts after 45 days |
+
+The existing `TimeDepositCalculator.updateBalance` public contract and observable behavior are preserved.
+
+## Design Decisions
+
+### API First
+
+The OpenAPI contract is defined before the REST implementation.
+
+Changes to the public API should be reflected in `docs/openapi.yaml` before changing the corresponding adapter code.
+
+### Interest Calculation
+
+Interest calculation is designed around explicit policies so that plan-specific rules remain isolated and future plan types can be introduced with minimal changes to existing business logic.
+
+### Money
+
+Monetary values use `BigDecimal`.
+
+`Double` and `Float` are not used for balances, withdrawals, or interest calculations.
+
+### Transactions and Concurrency
+
+Updating all balances is treated as a single application use case with a clear transaction boundary.
+
+Database consistency guarantees are preferred over application-level locking. Additional locking or distributed coordination should only be introduced when a concrete concurrency invariant requires it.
+
+### Persistence
+
+PostgreSQL is used as the relational database.
+
+Schema changes are managed through Flyway migrations.
+
+Integration tests use PostgreSQL through Testcontainers so that persistence behavior is tested against the same database engine used by the application.
+
+## Testing
+
+The testing strategy includes:
+
+- Characterization tests protecting existing behavior
+- Unit tests for domain and interest rules
+- Persistence integration tests using Testcontainers
+- API integration tests for the two required endpoints
+
+Business boundary cases receive explicit coverage, particularly around:
+
+- 30 days
+- 45 days
+- 1 year
+
+Run the complete test suite with:
+
+```bash
+./mvnw test
+```
+
+## Assumptions
+
+Where requirements are ambiguous, the smallest behavior-compatible interpretation is preferred.
+
+Assumptions should be documented close to the relevant implementation or test.
+
+No additional business API functionality is introduced beyond the assignment requirements.
+
+## AI-Assisted Development
+
+OpenAI Codex is used as an engineering assistant throughout the exercise.
+
+Repository-level instructions are defined in:
+
+`AGENTS.md`
+
+Reusable prompts and workflow examples are stored under:
+
+`docs/prompts/`
+
+Codex is used for:
+
+- repository analysis and onboarding
+- identifying characterization test scenarios
+- implementation assistance
+- test generation and review
+- refactoring suggestions
+- final requirement compliance review
+
+The workflow for significant changes is:
+
+```text
+Analyze
+  ↓
+Plan
+  ↓
+Characterize Existing Behavior
+  ↓
+Implement / Refactor
+  ↓
+Test
+  ↓
+Review
+```
+
+Architectural decisions, assumptions, and AI-generated changes are reviewed manually before being accepted.
+
+AI-generated code is treated as a proposal rather than authoritative implementation.
+
+## Documentation
+
+```text
+docs/
+├── architecture-guidelines.md
+├── erd.puml
+├── openapi.yaml
+└── prompts/
+```
+
+## Scope
+
+The solution intentionally avoids speculative distributed-system complexity that is not required by the assignment.
+
+Patterns such as distributed locks, Kafka, CQRS, event sourcing, sharding, Saga, TCC, and 2PC should only be introduced when supported by a concrete requirement.

@@ -1,0 +1,25 @@
+@startuml
+title Time Deposit - Entity Relationship Diagram
+
+hide circle
+skinparam linetype ortho
+
+entity "time_deposits" as time_deposits {
+    * id : INTEGER <<PK>>
+    --
+    * plan_type : VARCHAR
+    * days : INTEGER
+    * balance : DECIMAL
+}
+
+entity "withdrawals" as withdrawals {
+    * id : INTEGER <<PK>>
+    --
+    * time_deposit_id : INTEGER <<FK>>
+    * amount : DECIMAL
+    * date : DATE
+}
+
+time_deposits ||--o{ withdrawals : has
+
+@enduml
