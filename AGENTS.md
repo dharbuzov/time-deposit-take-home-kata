@@ -72,6 +72,14 @@ In particular:
 - Design for the stated scale, not hypothetical internet scale.
 - Do not introduce Kafka, CQRS, event sourcing, sharding, distributed cache, microservices, Saga, TCC, or 2PC without a concrete requirement.
 
+## Utilities and Mappers
+
+- Avoid global `utils` packages. Place helpers with the layer or concept that owns them.
+- Only truly generic, dependency-free helpers belong in shared code.
+- Keep persistence mapping inside the persistence adapter.
+- Keep REST mapping inside the inbound REST adapter.
+- Keep business calculations and business-specific helpers in the domain.
+
 ## Engineering Rules
 
 - Use `BigDecimal` for all monetary values.
@@ -159,6 +167,18 @@ Run security and regression checks from `kotlin/`:
 ./mvnw dependency-check:check
 ./mvnw clean test
 ```
+
+## Logging and Observability
+
+- Use the SLF4J/Logback stack already provided by Spring Boot.
+- Log business operation outcomes, not internal noise.
+- Include `X-Correlation-ID` in HTTP request context and log output.
+- Never log secrets, credentials, tokens, private keys, or database URLs containing credentials.
+- Avoid logging full domain or persistence objects.
+- Avoid duplicate exception logging across layers; log where useful operational context exists.
+- Keep INFO logs useful for operations and DEBUG logs for diagnostics.
+- Do not add observability infrastructure without a concrete requirement.
+- Preserve the Security First rules when adding or changing logs.
 
 ## Documentation
 

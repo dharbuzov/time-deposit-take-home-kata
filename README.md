@@ -10,6 +10,7 @@ Implementation of the XA Bank Time Deposit take-home assignment.
 - [Architecture](#architecture)
 - [Database](#database)
 - [Testing](#testing)
+- [Logging and Observability](#logging-and-observability)
 - [Security](#security)
 - [AI-Assisted Development](#ai-assisted-development)
 - [Scope](#scope)
@@ -119,6 +120,7 @@ PostgreSQL
 The source tree now contains the initial architecture skeleton under `org.ikigaidigital`:
 
 - `domain` for Spring/JPA-free business-facing models
+- `application.observability` for lightweight use-case logging support
 - `application.port.in` for the two use-case contracts
 - `application.port.out` for the persistence boundary used by application services
 - `application.service` for minimal use-case skeletons
@@ -161,6 +163,20 @@ H2 is not used as a persistence substitute.
 
 The Testcontainers bootstrap test runs against real PostgreSQL when Docker is available.
 If Docker is unavailable, that infrastructure test is skipped by Testcontainers.
+
+## Logging and Observability
+
+The application uses Spring Boot's default SLF4J/Logback logging stack with console output.
+
+HTTP requests support `X-Correlation-ID`:
+
+- an incoming non-blank value is reused
+- a missing or blank value is replaced with a generated UUID
+- the value is returned in the `X-Correlation-ID` response header
+- the value is included in application logs for the request
+
+The update-all balance operation logs one concise summary with operation name, processed deposit count,
+duration, and success or failure status. No external observability stack is required.
 
 ## Security
 

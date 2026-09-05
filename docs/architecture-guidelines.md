@@ -70,6 +70,20 @@ The database schema must stay consistent with `docs/erd.puml`.
 Persistence infrastructure belongs outside the domain. Database configuration, migrations,
 JPA mappings, and repository implementations must not leak into domain classes.
 
+## Utilities and Shared Code
+
+Avoid global utility garbage drawers such as `utils`, `common`, or `helpers`.
+Place helper code with the layer or concept that owns its meaning:
+
+- business calculations and domain-specific helpers belong in the domain
+- persistence mapping and database conversions belong in the outbound persistence adapter
+- REST DTO mapping, HTTP helpers, and serialization concerns belong in the inbound REST adapter
+- application orchestration helpers belong with the application use case they support
+
+Create `shared` only for genuinely generic, dependency-free code used across independent
+areas. Shared code must not depend on adapters, and domain code must remain free of
+Spring, JPA, HTTP, database, and Testcontainers dependencies.
+
 ## Current Package Skeleton
 
 The Kotlin implementation uses this lightweight package layout under `org.ikigaidigital`:
@@ -77,6 +91,7 @@ The Kotlin implementation uses this lightweight package layout under `org.ikigai
 ```text
 domain/
 application/
+  observability/
   port/
     in/
     out/
@@ -89,8 +104,8 @@ adapter/
 ```
 
 The current implementation includes the outbound Spring Data JPA persistence adapter,
-application services for the two use cases, and thin REST controllers for the two
-documented business endpoints.
+application services for the two use cases, lightweight application observability helpers,
+and thin REST controllers for the two documented business endpoints.
 
 ## Money
 
@@ -179,6 +194,18 @@ Security first, but complexity must be justified.
 
 Do not add service mesh, WAF, Vault, SIEM, external IAM platforms, or dedicated security
 infrastructure unless explicit requirements justify the complexity.
+
+## Logging and Observability
+
+Observability should make failures diagnosable without making the system noisy or exposing sensitive data.
+
+Use the existing SLF4J/Logback stack. HTTP requests should carry an `X-Correlation-ID`
+through MDC and return it in the response. Log important business operation outcomes at
+INFO with operation name, processed count, duration, and status. Use DEBUG for diagnostic
+details only. Never log secrets, credentials, tokens, request/response bodies by default,
+or full domain/persistence objects. Log exceptions once at the layer that has useful
+operational context. Do not add external observability infrastructure without a concrete
+requirement.
 
 ## Legacy Behavior
 
