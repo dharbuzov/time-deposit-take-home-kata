@@ -4,7 +4,7 @@ title Time Deposit - Entity Relationship Diagram
 hide circle
 skinparam linetype ortho
 
-entity "time_deposits" as time_deposits {
+entity "timeDeposits" as timeDeposits {
     * id : INTEGER <<PK>>
     --
     * plan_type : VARCHAR
@@ -20,6 +20,6 @@ entity "withdrawals" as withdrawals {
     * date : DATE
 }
 
-time_deposits ||--o{ withdrawals : has
+timeDeposits ||--o{ withdrawals : has
 
 @enduml
