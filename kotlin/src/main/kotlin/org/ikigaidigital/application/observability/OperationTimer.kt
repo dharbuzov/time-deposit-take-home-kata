@@ -1,8 +1,14 @@
 package org.ikigaidigital.application.observability
 
+/**
+ * Measures the elapsed time of an operation.
+ */
 class OperationTimer private constructor(
     private val startedAtNanos: Long
 ) {
+    /**
+     * Returns the elapsed time in milliseconds since the timer was started.
+     */
     fun elapsedMs(): Long =
         (System.nanoTime() - startedAtNanos) / NANOS_PER_MILLISECOND
 

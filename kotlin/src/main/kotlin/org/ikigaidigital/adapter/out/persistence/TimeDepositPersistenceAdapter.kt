@@ -5,6 +5,9 @@ import org.ikigaidigital.domain.TimeDepositAccount
 import org.ikigaidigital.domain.TimeDepositBalance
 import org.springframework.stereotype.Component
 
+/**
+ * Adapter for persistence operations on time deposits.
+ */
 @Component
 class TimeDepositPersistenceAdapter(
     private val timeDepositRepository: TimeDepositJpaRepository

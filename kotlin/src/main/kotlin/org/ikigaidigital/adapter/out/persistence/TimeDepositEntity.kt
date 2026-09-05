@@ -3,6 +3,8 @@ package org.ikigaidigital.adapter.out.persistence
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToMany
@@ -13,9 +15,11 @@ import java.math.BigDecimal
 @Entity
 @Table(name = "timeDeposits")
 open class TimeDepositEntity() {
+
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    open var id: Int = 0
+    open var id: Int? = null
 
     @Column(name = "planType", nullable = false)
     open var planType: String = ""
@@ -37,7 +41,6 @@ open class TimeDepositEntity() {
     open var withdrawals: MutableList<WithdrawalEntity> = mutableListOf()
 
     constructor(
-        id: Int,
         planType: String,
         days: Int,
         balance: BigDecimal

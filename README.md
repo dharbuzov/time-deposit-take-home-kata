@@ -153,6 +153,7 @@ The test suite contains:
 - Persistence adapter integration tests using PostgreSQL Testcontainers and Flyway
 - Application use-case integration tests covering get-all, update-all, and rollback behavior
 - API integration tests covering the two REST endpoints
+- E2E tests covering HTTP-to-PostgreSQL flows through the real Spring application context
 - A minimal Spring Boot/Testcontainers integration test that verifies:
   - Spring context startup
   - PostgreSQL container startup
@@ -161,8 +162,8 @@ The test suite contains:
 
 H2 is not used as a persistence substitute.
 
-The Testcontainers bootstrap test runs against real PostgreSQL when Docker is available.
-If Docker is unavailable, that infrastructure test is skipped by Testcontainers.
+PostgreSQL integration and E2E tests run against real PostgreSQL containers and require Docker.
+If Docker is unavailable, those tests are skipped by Testcontainers.
 
 ## Logging and Observability
 

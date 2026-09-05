@@ -19,6 +19,7 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/time_deposit
       DB_USERNAME: time_deposit
       DB_PASSWORD: time_deposit
+      APP_DATABASE_SEED_ENABLED: "true"
     ports:
       - "8080:8080"
     depends_on:
