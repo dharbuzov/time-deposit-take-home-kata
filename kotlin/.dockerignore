@@ -1,4 +1,8 @@
-target
-.mvn/wrapper/dists
-.idea
+target/
+.git/
+.idea/
+docs/
 *.iml
+README.md
+AGENTS.md
+docker-compose*

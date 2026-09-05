@@ -3,12 +3,12 @@ package org.ikigaidigital.application.port.`in`
 import org.ikigaidigital.domain.TimeDepositAccount
 
 /**
- * Use case for getting all time deposits.
+ * Use case for getting time deposits.
  */
 interface GetTimeDepositsUseCase {
 
     /**
-     * Returns all existing time deposits.
+     * Returns one page of existing time deposits.
      */
-    fun getTimeDeposits(): List<TimeDepositAccount>
+    fun getTimeDeposits(request: TimeDepositPageRequest): PageResult<TimeDepositAccount>
 }

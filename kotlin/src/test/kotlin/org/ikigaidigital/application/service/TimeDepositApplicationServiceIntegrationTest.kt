@@ -2,6 +2,9 @@ package org.ikigaidigital.application.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.ikigaidigital.application.port.`in`.GetTimeDepositsUseCase
+import org.ikigaidigital.application.port.`in`.SortDirection
+import org.ikigaidigital.application.port.`in`.SortSpec
+import org.ikigaidigital.application.port.`in`.TimeDepositPageRequest
 import org.ikigaidigital.application.port.`in`.UpdateTimeDepositBalancesUseCase
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -36,9 +39,10 @@ class TimeDepositApplicationServiceIntegrationTest {
 
     @Test
     fun `get all returns empty result when no deposits exist`() {
-        val deposits = getTimeDepositsUseCase.getTimeDeposits()
+        val deposits = getTimeDepositsUseCase.getTimeDeposits(defaultRequest())
 
-        assertThat(deposits).isEmpty()
+        assertThat(deposits.content).isEmpty()
+        assertThat(deposits.totalElements).isZero()
     }
 
     @Test
@@ -47,7 +51,7 @@ class TimeDepositApplicationServiceIntegrationTest {
         insertTimeDeposit(2, "premium", 46, BigDecimal("3300.75"))
         insertWithdrawal(10, 2, BigDecimal("300.33"), LocalDate.of(2026, 9, 3))
 
-        val deposits = getTimeDepositsUseCase.getTimeDeposits()
+        val deposits = getTimeDepositsUseCase.getTimeDeposits(defaultRequest()).content
 
         assertThat(deposits.map { it.id }).containsExactly(1, 2)
         assertThat(deposits[0].balance).isEqualByComparingTo("1200.25")
@@ -62,7 +66,7 @@ class TimeDepositApplicationServiceIntegrationTest {
     fun `update all does nothing when no deposits exist`() {
         updateTimeDepositBalancesUseCase.updateTimeDepositBalances()
 
-        assertThat(getTimeDepositsUseCase.getTimeDeposits()).isEmpty()
+        assertThat(getTimeDepositsUseCase.getTimeDeposits(defaultRequest()).content).isEmpty()
     }
 
     @Test
@@ -75,7 +79,7 @@ class TimeDepositApplicationServiceIntegrationTest {
 
         updateTimeDepositBalancesUseCase.updateTimeDepositBalances()
 
-        val deposits = getTimeDepositsUseCase.getTimeDeposits()
+        val deposits = getTimeDepositsUseCase.getTimeDeposits(defaultRequest()).content
 
         assertThat(deposits[0].balance).isEqualByComparingTo("1201.00")
         assertThat(deposits[1].balance).isEqualByComparingTo("1203.00")
@@ -104,6 +108,13 @@ class TimeDepositApplicationServiceIntegrationTest {
             date
         )
     }
+
+    private fun defaultRequest(): TimeDepositPageRequest =
+        TimeDepositPageRequest(
+            page = 0,
+            size = 20,
+            sort = SortSpec("id", SortDirection.ASC)
+        )
 
     companion object {
         @Container

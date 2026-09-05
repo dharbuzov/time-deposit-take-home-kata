@@ -19,9 +19,10 @@ class TimeDepositCalculator {
             }
 
             val interest = policy?.calculateInterest(xs[i].balance, xs[i].days) ?: 0.0
-            val a2d = BigDecimal(interest).setScale(2, RoundingMode.HALF_UP)
-            xs[i].balance += a2d.toDouble()
-            if (a2d.signum() != 0) {
+            val interestAmountRounded = BigDecimal(interest).setScale(2, RoundingMode.HALF_UP)
+            // Increase the balance by interest amount rounded to 2 decimal places
+            xs[i].balance += interestAmountRounded.toDouble()
+            if (interestAmountRounded.signum() != 0) {
                 updatedDeposits++
             }
         }

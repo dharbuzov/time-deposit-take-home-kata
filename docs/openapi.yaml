@@ -18,17 +18,45 @@ servers:
 paths:
   /time-deposits:
     get:
-      summary: Get all time deposits
+      summary: Get time deposits
       operationId: getTimeDeposits
+      parameters:
+        - name: page
+          in: query
+          description: Zero-based page index. Defaults to 0.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 0
+            default: 0
+        - name: size
+          in: query
+          description: Page size. Defaults to 20 and must not exceed 100.
+          required: false
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: Sort expression in the form field,direction. Supported fields are id. Defaults to id,asc.
+          required: false
+          schema:
+            type: string
+            default: id,asc
+            enum:
+              - id,asc
+              - id,desc
       responses:
         '200':
-          description: All time deposits
+          description: Page of time deposits
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TimeDepositResponse'
+                $ref: '#/components/schemas/TimeDepositPageResponse'
 
   /time-deposits/balances:
     post:
@@ -40,6 +68,36 @@ paths:
 
 components:
   schemas:
+    TimeDepositPageResponse:
+      type: object
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/TimeDepositResponse'
+        page:
+          type: integer
+          format: int32
+          example: 0
+        size:
+          type: integer
+          format: int32
+          example: 20
+        totalElements:
+          type: integer
+          format: int64
+          example: 125
+        totalPages:
+          type: integer
+          format: int32
+          example: 7
+
     TimeDepositResponse:
       type: object
       required:

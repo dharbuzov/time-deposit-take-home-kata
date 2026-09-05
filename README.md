@@ -93,11 +93,22 @@ Both endpoints are implemented as thin REST adapters over the application use ca
 Example calls:
 
 ```bash
-curl http://localhost:8080/time-deposits
+curl "http://localhost:8080/time-deposits?page=0&size=20&sort=id,asc"
 curl -X POST -i http://localhost:8080/time-deposits/balances
 ```
 
 `POST /time-deposits/balances` returns `204 No Content` when the update succeeds.
+
+## Assumptions / Design Decisions
+
+The original requirement asks to retrieve all time deposits. Returning an unbounded dataset in a single response
+does not scale safely as the table grows, because it can cause excessive database reads, application memory usage,
+large JSON payloads, and long response times. The GET endpoint therefore uses standard page-based pagination
+(`page`, `size`, `sort`) with bounded page sizes. This is an intentional scalability trade-off that keeps the API
+predictable while preserving access to the complete dataset across pages.
+
+`offset` is not exposed separately because page-based pagination already derives it internally as `page * size`,
+and exposing both would create ambiguous semantics.
 
 ## Architecture
 

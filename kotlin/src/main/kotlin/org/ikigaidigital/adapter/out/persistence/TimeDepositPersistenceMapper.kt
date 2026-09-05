@@ -5,12 +5,15 @@ import org.ikigaidigital.domain.Withdrawal
 
 object TimeDepositPersistenceMapper {
     fun toDomain(entity: TimeDepositEntity): TimeDepositAccount =
+        toDomain(entity, entity.withdrawals)
+
+    fun toDomain(entity: TimeDepositEntity, withdrawals: List<WithdrawalEntity>): TimeDepositAccount =
         TimeDepositAccount(
             id = entity.id!!,
             planType = entity.planType,
             balance = entity.balance,
             days = entity.days,
-            withdrawals = entity.withdrawals.map(::toDomain)
+            withdrawals = withdrawals.map(::toDomain)
         )
 
     private fun toDomain(entity: WithdrawalEntity): Withdrawal =

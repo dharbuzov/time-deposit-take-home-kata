@@ -3,6 +3,14 @@ package org.ikigaidigital.adapter.`in`.rest
 import java.math.BigDecimal
 import java.time.LocalDate
 
+data class TimeDepositPageResponse(
+    val content: List<TimeDepositResponse>,
+    val page: Int,
+    val size: Int,
+    val totalElements: Long,
+    val totalPages: Int
+)
+
 data class TimeDepositResponse(
     val id: Int,
     val planType: String,

@@ -2,6 +2,10 @@ package org.ikigaidigital.adapter.`in`.rest
 
 import org.assertj.core.api.Assertions.assertThat
 import org.ikigaidigital.application.port.`in`.GetTimeDepositsUseCase
+import org.ikigaidigital.application.port.`in`.PageResult
+import org.ikigaidigital.application.port.`in`.SortDirection
+import org.ikigaidigital.application.port.`in`.SortSpec
+import org.ikigaidigital.application.port.`in`.TimeDepositPageRequest
 import org.ikigaidigital.application.port.`in`.UpdateTimeDepositBalancesUseCase
 import org.ikigaidigital.domain.TimeDepositAccount
 import org.junit.jupiter.api.Test
@@ -34,8 +38,8 @@ class CorrelationIdFilterTest {
     fun `returns incoming correlation id and exposes it through MDC during request handling`() {
         doAnswer {
             assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isEqualTo("test-correlation-id")
-            emptyList<TimeDepositAccount>()
-        }.`when`(getTimeDepositsUseCase).getTimeDeposits()
+            emptyPage()
+        }.`when`(getTimeDepositsUseCase).getTimeDeposits(defaultRequest())
 
         mockMvc.perform(
             get("/time-deposits")
@@ -53,8 +57,8 @@ class CorrelationIdFilterTest {
             val correlationId = MDC.get(CorrelationIdFilter.MDC_KEY)
             assertThat(correlationId).isNotBlank()
             UUID.fromString(correlationId)
-            emptyList<TimeDepositAccount>()
-        }.`when`(getTimeDepositsUseCase).getTimeDeposits()
+            emptyPage()
+        }.`when`(getTimeDepositsUseCase).getTimeDeposits(defaultRequest())
 
         mockMvc.perform(get("/time-deposits"))
             .andExpect(status().isOk)
@@ -70,8 +74,8 @@ class CorrelationIdFilterTest {
             assertThat(correlationId).isNotBlank()
             assertThat(correlationId).isNotEqualTo(" ")
             UUID.fromString(correlationId)
-            emptyList<TimeDepositAccount>()
-        }.`when`(getTimeDepositsUseCase).getTimeDeposits()
+            emptyPage()
+        }.`when`(getTimeDepositsUseCase).getTimeDeposits(defaultRequest())
 
         mockMvc.perform(
             get("/time-deposits")
@@ -101,4 +105,20 @@ class CorrelationIdFilterTest {
 
         assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isNull()
     }
+
+    private fun defaultRequest(): TimeDepositPageRequest =
+        TimeDepositPageRequest(
+            page = 0,
+            size = 20,
+            sort = SortSpec("id", SortDirection.ASC)
+        )
+
+    private fun emptyPage(): PageResult<TimeDepositAccount> =
+        PageResult(
+            content = emptyList(),
+            page = 0,
+            size = 20,
+            totalElements = 0,
+            totalPages = 0
+        )
 }

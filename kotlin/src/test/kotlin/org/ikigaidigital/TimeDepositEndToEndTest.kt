@@ -58,7 +58,7 @@ class TimeDepositEndToEndTest {
             .andExpect(status().isOk)
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(header().exists(CorrelationIdFilter.CORRELATION_ID_HEADER))
-            .andExpect(content().json("[]"))
+            .andExpect(content().json("""{"content":[],"page":0,"size":20,"totalElements":0,"totalPages":0}"""))
 
         mockMvc.perform(post("/time-deposits/balances"))
             .andExpect(status().isNoContent)
@@ -83,27 +83,41 @@ class TimeDepositEndToEndTest {
 
         val json = objectMapper.readTree(body)
 
-        assertThat(json.isArray).isTrue()
-        assertThat(json).hasSize(2)
-        assertThat(fieldNames(json[0])).containsExactlyInAnyOrder(
+        assertThat(json.isObject).isTrue()
+        assertThat(fieldNames(json)).containsExactlyInAnyOrder(
+            "content",
+            "page",
+            "size",
+            "totalElements",
+            "totalPages"
+        )
+        assertThat(json["page"].asInt()).isEqualTo(0)
+        assertThat(json["size"].asInt()).isEqualTo(20)
+        assertThat(json["totalElements"].asLong()).isEqualTo(2)
+        assertThat(json["totalPages"].asInt()).isEqualTo(1)
+
+        val content = json["content"]
+        assertThat(content.isArray).isTrue()
+        assertThat(content).hasSize(2)
+        assertThat(fieldNames(content[0])).containsExactlyInAnyOrder(
             "id",
             "planType",
             "balance",
             "days",
             "withdrawals"
         )
-        assertThat(json[0]["balance"].isNumber).isTrue()
-        assertThat(json[0]["withdrawals"]).isEmpty()
-        assertThat(json[0].has("timeDepositId")).isFalse()
-        assertThat(json[0].has("version")).isFalse()
+        assertThat(content[0]["balance"].isNumber).isTrue()
+        assertThat(content[0]["withdrawals"]).isEmpty()
+        assertThat(content[0].has("timeDepositId")).isFalse()
+        assertThat(content[0].has("version")).isFalse()
 
-        assertThat(json[1]["id"].asInt()).isEqualTo(2)
-        assertThat(json[1]["planType"].asText()).isEqualTo("premium")
-        assertThat(json[1]["balance"].isNumber).isTrue()
-        assertThat(json[1]["days"].asInt()).isEqualTo(46)
-        assertThat(json[1]["withdrawals"]).hasSize(1)
+        assertThat(content[1]["id"].asInt()).isEqualTo(2)
+        assertThat(content[1]["planType"].asText()).isEqualTo("premium")
+        assertThat(content[1]["balance"].isNumber).isTrue()
+        assertThat(content[1]["days"].asInt()).isEqualTo(46)
+        assertThat(content[1]["withdrawals"]).hasSize(1)
 
-        val withdrawal = json[1]["withdrawals"][0]
+        val withdrawal = content[1]["withdrawals"][0]
         assertThat(fieldNames(withdrawal)).containsExactlyInAnyOrder("id", "amount", "date")
         assertThat(withdrawal["id"].asInt()).isEqualTo(10)
         assertThat(withdrawal["amount"].isNumber).isTrue()
@@ -134,7 +148,7 @@ class TimeDepositEndToEndTest {
             .response
             .contentAsString
         val json = objectMapper.readTree(body)
-        val balancesById = json.associate { it["id"].asInt() to it["balance"].decimalValue() }
+        val balancesById = json["content"].associate { it["id"].asInt() to it["balance"].decimalValue() }
 
         assertThat(balancesById[1]).isEqualByComparingTo("1201.00")
         assertThat(balancesById[2]).isEqualByComparingTo("1203.00")
@@ -194,6 +208,10 @@ class TimeDepositEndToEndTest {
         assertThat(contract).contains("/time-deposits/balances:")
         assertThat(contract).contains("post:")
         assertThat(contract).contains("'204':")
+        assertThat(contract).contains("- name: page")
+        assertThat(contract).contains("- name: size")
+        assertThat(contract).contains("- name: sort")
+        assertThat(contract).contains("TimeDepositPageResponse:")
         assertThat(contract).contains("TimeDepositResponse:")
         assertThat(contract).contains("WithdrawalResponse:")
     }

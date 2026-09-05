@@ -52,6 +52,11 @@ The current REST controller is a thin inbound adapter over the two application p
 
 Use OpenAPI / Swagger.
 
+Public collection APIs should use bounded pagination for potentially large datasets. `page`, `size`, and `sort`
+are API concerns, while raw database `offset` remains internal and is derived from `page * size`. Framework
+pagination types such as Spring `Page`, `Pageable`, and `Sort` must stay inside adapters; application ports use
+framework-independent pagination request and result models. Avoid unbounded `findAll()` access at REST boundaries.
+
 ## Persistence
 
 Use PostgreSQL with explicit Flyway migrations.

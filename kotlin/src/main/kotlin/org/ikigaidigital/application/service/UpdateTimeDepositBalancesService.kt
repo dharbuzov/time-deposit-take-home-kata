@@ -13,6 +13,7 @@ class UpdateTimeDepositBalancesService(
     private val timeDepositPersistencePort: TimeDepositPersistencePort,
     private val timeDepositCalculator: TimeDepositCalculator
 ) : UpdateTimeDepositBalancesUseCase {
+
     @Transactional
     override fun updateTimeDepositBalances() {
         var processedDeposits = 0

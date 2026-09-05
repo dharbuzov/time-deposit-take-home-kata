@@ -2,6 +2,8 @@ package org.ikigaidigital.application.service
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.ikigaidigital.application.port.`in`.PageResult
+import org.ikigaidigital.application.port.`in`.TimeDepositPageRequest
 import org.ikigaidigital.application.port.`in`.UpdateTimeDepositBalancesUseCase
 import org.ikigaidigital.application.port.out.TimeDepositPersistencePort
 import org.ikigaidigital.domain.TimeDepositAccount
@@ -76,6 +78,15 @@ class UpdateTimeDepositBalancesTransactionIntegrationTest {
                     listOf(
                         TimeDepositAccount(1, "basic", BigDecimal("1200.00"), 31),
                         TimeDepositAccount(2, "premium", BigDecimal("1200.00"), 46)
+                    )
+
+                override fun findPageWithWithdrawals(request: TimeDepositPageRequest): PageResult<TimeDepositAccount> =
+                    PageResult(
+                        content = findAllWithWithdrawals(),
+                        page = request.page,
+                        size = request.size,
+                        totalElements = 2,
+                        totalPages = 1
                     )
 
                 override fun replaceBalances(balances: List<TimeDepositBalance>) {

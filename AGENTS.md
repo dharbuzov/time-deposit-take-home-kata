@@ -55,6 +55,11 @@ Before implementing or changing REST functionality:
 
 Do not change public endpoint behavior in code without updating the contract first.
 
+Public collection APIs should use bounded pagination for potentially large datasets. Treat `page`, `size`, and
+`sort` as API concerns, derive raw database `offset` internally from `page * size`, keep framework pagination
+types inside adapters, use framework-independent pagination models in application ports, and avoid unbounded
+`findAll()` access at REST boundaries.
+
 ## Architecture
 
 Follow `docs/architecture-guidelines.md`.
