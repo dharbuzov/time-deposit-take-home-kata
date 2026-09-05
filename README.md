@@ -105,7 +105,6 @@ Persistence Adapter
 PostgreSQL
 ```
 
-The current baseline adds Spring Boot and persistence infrastructure without adding controllers, use cases, or persistence adapters yet.
 The source tree now contains the initial architecture skeleton under `org.ikigaidigital`:
 
 - `domain` for Spring/JPA-free business-facing models
@@ -113,9 +112,9 @@ The source tree now contains the initial architecture skeleton under `org.ikigai
 - `application.port.out` for the persistence boundary used by application services
 - `application.service` for minimal use-case skeletons
 - `adapter.in.rest` for API response DTOs and mapping boundaries
-- `adapter.out.persistence` for the persistence adapter boundary
+- `adapter.out.persistence` for JPA persistence entities, repositories, mapping, and the outbound adapter
 
-The skeleton does not yet expose REST controllers or implement JPA persistence behavior.
+The implementation does not yet expose REST controllers or implement balance-update orchestration.
 The protected legacy `TimeDeposit` and `TimeDepositCalculator.updateBalance` contract remains unchanged.
 
 ## Database
@@ -129,11 +128,15 @@ Flyway manages schema migrations. The initial migration creates:
 
 The schema is based on `docs/erd.puml`.
 
+The outbound persistence adapter uses Spring Data JPA with persistence-specific entities.
+JPA mappings explicitly preserve the required mixed-case table and column names from the assignment.
+
 ## Testing
 
 The test suite contains:
 
 - Characterization tests protecting existing `TimeDepositCalculator.updateBalance` behavior
+- Persistence adapter integration tests using PostgreSQL Testcontainers and Flyway
 - A minimal Spring Boot/Testcontainers integration test that verifies:
   - Spring context startup
   - PostgreSQL container startup

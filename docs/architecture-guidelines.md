@@ -85,9 +85,9 @@ adapter/
     persistence/
 ```
 
-The current skeleton establishes dependency direction only. REST controllers, JPA entity
-mappings, repository queries, and full balance-update orchestration are intentionally
-deferred to later implementation steps.
+The current implementation includes the outbound Spring Data JPA persistence adapter.
+REST controllers and full balance-update orchestration are intentionally deferred to
+later implementation steps.
 
 ## Money
 

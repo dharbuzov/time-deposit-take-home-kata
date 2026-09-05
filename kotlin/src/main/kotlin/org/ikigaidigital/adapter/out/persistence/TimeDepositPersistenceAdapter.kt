@@ -6,12 +6,29 @@ import org.ikigaidigital.domain.TimeDepositBalance
 import org.springframework.stereotype.Component
 
 @Component
-class TimeDepositPersistenceAdapter : TimeDepositPersistencePort {
-    override fun findAllWithWithdrawals(): List<TimeDepositAccount> {
-        throw UnsupportedOperationException("Time deposit persistence is not implemented yet.")
-    }
+class TimeDepositPersistenceAdapter(
+    private val timeDepositRepository: TimeDepositJpaRepository
+) : TimeDepositPersistencePort {
+    override fun findAllWithWithdrawals(): List<TimeDepositAccount> =
+        timeDepositRepository.findAllByOrderByIdAsc()
+            .map(TimeDepositPersistenceMapper::toDomain)
 
     override fun replaceBalances(balances: List<TimeDepositBalance>) {
-        throw UnsupportedOperationException("Time deposit balance persistence is not implemented yet.")
+        if (balances.isEmpty()) {
+            return
+        }
+
+        val entitiesById = timeDepositRepository.findAllById(balances.map { it.timeDepositId })
+            .associateBy { it.id }
+
+        val updatedEntities = balances.map { balance ->
+            val entity = requireNotNull(entitiesById[balance.timeDepositId]) {
+                "Time deposit ${balance.timeDepositId} was not found."
+            }
+            entity.balance = balance.balance
+            entity
+        }
+
+        timeDepositRepository.saveAll(updatedEntities)
     }
 }
