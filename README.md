@@ -57,8 +57,10 @@ Run the application:
 ./mvnw spring-boot:run
 ```
 
-The application reads database settings from environment variables:
+The application listens on `SERVER_PORT`, default `8080`.
+It reads database settings from environment variables:
 
+- `SERVER_PORT`, default `8080`
 - `DB_URL`, default `jdbc:postgresql://localhost:5432/time_deposit`
 - `DB_USERNAME`, default `time_deposit`
 - `DB_PASSWORD`, default `time_deposit`
@@ -85,7 +87,16 @@ The contract defines exactly two business endpoints:
 - `GET /time-deposits`
 - `POST /time-deposits/balances`
 
-Business endpoint implementation is intentionally not part of the current infrastructure baseline.
+Both endpoints are implemented as thin REST adapters over the application use cases.
+
+Example calls:
+
+```bash
+curl http://localhost:8080/time-deposits
+curl -X POST -i http://localhost:8080/time-deposits/balances
+```
+
+`POST /time-deposits/balances` returns `204 No Content` when the update succeeds.
 
 ## Architecture
 
@@ -114,7 +125,7 @@ The source tree now contains the initial architecture skeleton under `org.ikigai
 - `adapter.in.rest` for API response DTOs and mapping boundaries
 - `adapter.out.persistence` for JPA persistence entities, repositories, mapping, and the outbound adapter
 
-The implementation does not yet expose REST controllers.
+REST controllers are thin inbound adapters and delegate to application use cases.
 The protected legacy `TimeDeposit` and `TimeDepositCalculator.updateBalance` contract remains unchanged.
 
 ## Database
@@ -139,6 +150,7 @@ The test suite contains:
 - Characterization tests protecting existing `TimeDepositCalculator.updateBalance` behavior
 - Persistence adapter integration tests using PostgreSQL Testcontainers and Flyway
 - Application use-case integration tests covering get-all, update-all, and rollback behavior
+- API integration tests covering the two REST endpoints
 - A minimal Spring Boot/Testcontainers integration test that verifies:
   - Spring context startup
   - PostgreSQL container startup

@@ -5,6 +5,16 @@ info:
   version: 1.0.0
   description: API for retrieving time deposits and updating all time deposit balances.
 
+servers:
+  - url: http://localhost:8080
+    description: Local development and Docker Compose default
+  - url: http://localhost:{port}
+    description: Local development with custom server port
+    variables:
+      port:
+        default: '8080'
+        description: HTTP port configured by SERVER_PORT
+
 paths:
   /time-deposits:
     get:

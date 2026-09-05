@@ -48,6 +48,8 @@ Controllers should only:
 - invoke application use cases
 - map responses
 
+The current REST controller is a thin inbound adapter over the two application ports.
+
 Use OpenAPI / Swagger.
 
 ## Persistence
@@ -86,9 +88,9 @@ adapter/
     persistence/
 ```
 
-The current implementation includes the outbound Spring Data JPA persistence adapter
-and application services for the two use cases. REST controllers are intentionally
-deferred to a later implementation step.
+The current implementation includes the outbound Spring Data JPA persistence adapter,
+application services for the two use cases, and thin REST controllers for the two
+documented business endpoints.
 
 ## Money
 
