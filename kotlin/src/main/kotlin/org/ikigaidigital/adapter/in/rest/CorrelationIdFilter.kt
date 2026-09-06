@@ -3,6 +3,7 @@ package org.ikigaidigital.adapter.`in`.rest
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
+import org.ikigaidigital.application.observability.CorrelationContext
 import org.slf4j.MDC
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
@@ -19,18 +20,17 @@ class CorrelationIdFilter : OncePerRequestFilter() {
             ?.takeIf { it.isNotBlank() }
             ?: UUID.randomUUID().toString()
 
-        MDC.put(MDC_KEY, correlationId)
+        MDC.put(CorrelationContext.MDC_KEY, correlationId)
         response.setHeader(CORRELATION_ID_HEADER, correlationId)
 
         try {
             filterChain.doFilter(request, response)
         } finally {
-            MDC.remove(MDC_KEY)
+            MDC.remove(CorrelationContext.MDC_KEY)
         }
     }
 
     companion object {
         const val CORRELATION_ID_HEADER = "X-Correlation-ID"
-        const val MDC_KEY = "correlationId"
     }
 }

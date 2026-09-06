@@ -1,6 +1,7 @@
 package org.ikigaidigital.adapter.`in`.rest
 
 import org.assertj.core.api.Assertions.assertThat
+import org.ikigaidigital.application.observability.CorrelationContext
 import org.ikigaidigital.application.port.`in`.GetTimeDepositsUseCase
 import org.ikigaidigital.application.port.`in`.PageResult
 import org.ikigaidigital.application.port.`in`.SortDirection
@@ -13,8 +14,8 @@ import org.mockito.Mockito.doAnswer
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.context.annotation.Import
+import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
@@ -28,16 +29,16 @@ class CorrelationIdFilterTest {
     @Autowired
     private lateinit var mockMvc: MockMvc
 
-    @MockBean
+    @MockitoBean
     private lateinit var getTimeDepositsUseCase: GetTimeDepositsUseCase
 
-    @MockBean
+    @MockitoBean
     private lateinit var updateTimeDepositBalancesUseCase: UpdateTimeDepositBalancesUseCase
 
     @Test
     fun `returns incoming correlation id and exposes it through MDC during request handling`() {
         doAnswer {
-            assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isEqualTo("test-correlation-id")
+            assertThat(MDC.get(CorrelationContext.MDC_KEY)).isEqualTo("test-correlation-id")
             emptyPage()
         }.`when`(getTimeDepositsUseCase).getTimeDeposits(defaultRequest())
 
@@ -48,13 +49,13 @@ class CorrelationIdFilterTest {
             .andExpect(status().isOk)
             .andExpect(header().string(CorrelationIdFilter.CORRELATION_ID_HEADER, "test-correlation-id"))
 
-        assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isNull()
+        assertThat(MDC.get(CorrelationContext.MDC_KEY)).isNull()
     }
 
     @Test
     fun `generates correlation id when request header is missing`() {
         doAnswer {
-            val correlationId = MDC.get(CorrelationIdFilter.MDC_KEY)
+            val correlationId = MDC.get(CorrelationContext.MDC_KEY)
             assertThat(correlationId).isNotBlank()
             UUID.fromString(correlationId)
             emptyPage()
@@ -64,13 +65,13 @@ class CorrelationIdFilterTest {
             .andExpect(status().isOk)
             .andExpect(header().exists(CorrelationIdFilter.CORRELATION_ID_HEADER))
 
-        assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isNull()
+        assertThat(MDC.get(CorrelationContext.MDC_KEY)).isNull()
     }
 
     @Test
     fun `generates correlation id when request header is blank`() {
         doAnswer {
-            val correlationId = MDC.get(CorrelationIdFilter.MDC_KEY)
+            val correlationId = MDC.get(CorrelationContext.MDC_KEY)
             assertThat(correlationId).isNotBlank()
             assertThat(correlationId).isNotEqualTo(" ")
             UUID.fromString(correlationId)
@@ -84,13 +85,13 @@ class CorrelationIdFilterTest {
             .andExpect(status().isOk)
             .andExpect(header().exists(CorrelationIdFilter.CORRELATION_ID_HEADER))
 
-        assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isNull()
+        assertThat(MDC.get(CorrelationContext.MDC_KEY)).isNull()
     }
 
     @Test
     fun `clears MDC after failed request processing`() {
         doAnswer {
-            assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isEqualTo("failing-request")
+            assertThat(MDC.get(CorrelationContext.MDC_KEY)).isEqualTo("failing-request")
             throw IllegalStateException("Simulated failure")
         }.`when`(updateTimeDepositBalancesUseCase).updateTimeDepositBalances()
 
@@ -103,7 +104,7 @@ class CorrelationIdFilterTest {
             assertThat(ex).hasCauseInstanceOf(IllegalStateException::class.java)
         }
 
-        assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isNull()
+        assertThat(MDC.get(CorrelationContext.MDC_KEY)).isNull()
     }
 
     private fun defaultRequest(): TimeDepositPageRequest =

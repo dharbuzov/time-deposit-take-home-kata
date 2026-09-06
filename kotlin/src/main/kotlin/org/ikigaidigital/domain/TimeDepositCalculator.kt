@@ -5,35 +5,46 @@ import org.slf4j.LoggerFactory
 import java.math.BigDecimal
 import java.math.RoundingMode
 
-class TimeDepositCalculator {
-    private val interestPolicyResolver = InterestPolicyResolver()
+class TimeDepositCalculator(
+    private val interestPolicyResolver: InterestPolicyResolver = InterestPolicyResolver()
+) {
 
     fun updateBalance(xs: List<TimeDeposit>) {
+        val deposits = xs
         var updatedDeposits = 0
         var unsupportedPlans = 0
 
-        for (i in xs.indices) {
-            val policy = interestPolicyResolver.resolve(xs[i].planType)
+        deposits.forEach { deposit ->
+            val policy = interestPolicyResolver.resolve(deposit.planType)
+
             if (policy == null) {
                 unsupportedPlans++
-                continue
+                return@forEach
             }
 
-            val interest = policy.calculateInterest(xs[i].balance, xs[i].days) ?: 0.0
-            val interestAmountRounded = BigDecimal(interest).setScale(2, RoundingMode.HALF_UP)
-            // Increase the balance by interest amount rounded to 2 decimal places
-            xs[i].balance += interestAmountRounded.toDouble()
-            if (interestAmountRounded.signum() != 0) {
-                updatedDeposits++
+            val interest = roundToCents(policy.calculateInterest(deposit.balance, deposit.days))
+
+            if (interest.signum() == 0) {
+                return@forEach
             }
+
+            applyInterest(deposit, interest)
+            updatedDeposits++
         }
 
         logger.debug(
             "operation=calculate_time_deposit_interest deposits={} updatedDeposits={} unsupportedPlans={}",
-            xs.size,
+            deposits.size,
             updatedDeposits,
             unsupportedPlans
         )
+    }
+
+    private fun roundToCents(amount: Double): BigDecimal =
+        BigDecimal(amount).setScale(2, RoundingMode.HALF_UP)
+
+    private fun applyInterest(deposit: TimeDeposit, interest: BigDecimal) {
+        deposit.balance += interest.toDouble()
     }
 
     companion object {

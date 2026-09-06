@@ -60,12 +60,22 @@ Run the application:
 ```
 
 The application listens on `SERVER_PORT`, default `8080`.
-It reads database settings from environment variables:
+It reads runtime settings from environment variables:
 
 - `SERVER_PORT`, default `8080`
 - `DB_URL`, default `jdbc:postgresql://localhost:5432/time_deposit`
 - `DB_USERNAME`, default `time_deposit`
 - `DB_PASSWORD`, default `time_deposit`
+- `APP_DATABASE_SEED_ENABLED`, default `false`
+- `APP_TIME_DEPOSIT_UPDATE_BATCH_SIZE`, default `500`
+- `APP_TIME_DEPOSIT_UPDATE_WORKERS`, default `4`
+- `DB_MAX_POOL_SIZE`, default `10`
+
+Swagger UI is available at:
+
+```text
+http://localhost:8080/swagger-ui/index.html
+```
 
 ### Run With Docker Compose
 
@@ -75,6 +85,8 @@ docker compose up --build
 ```
 
 Compose starts only the application and PostgreSQL.
+For reviewer convenience, Compose explicitly enables deterministic synthetic demo data through
+`APP_DATABASE_SEED_ENABLED=true`.
 
 ## API
 
@@ -98,6 +110,9 @@ curl "http://localhost:8080/time-deposits?page=0&size=20&sort=id,asc"
 curl -X POST -i http://localhost:8080/time-deposits/balances
 ```
 
+`GET /time-deposits` uses zero-based pagination. Defaults are `page=0`, `size=20`, and `sort=id,asc`.
+The maximum `size` is `100`; supported sort values are `id,asc` and `id,desc`.
+
 `POST /time-deposits/balances` returns `200 OK` with a processing summary when the update succeeds.
 
 ## Assumptions / Design Decisions
@@ -118,8 +133,8 @@ the complete table. The implementation therefore traverses deposit IDs in bounde
 start upper bound. Deposits inserted after the run starts are intentionally left for the next invocation.
 
 Batches can be processed independently, so a small bounded worker pool improves throughput while keeping database
-pressure controlled. The default worker count is deliberately below the default Hikari maximum pool size, leaving
-connection headroom for request handling and other database work.
+pressure controlled. The default worker count is `4`, deliberately below the default Hikari maximum pool size of `10`,
+leaving connection headroom for request handling, the coordinator, and other database work.
 
 One transaction across the complete dataset would create a long-running transaction with large rollback scope and
 prolonged resource retention. Each worker batch therefore executes in its own transaction. Successfully committed
@@ -192,6 +207,10 @@ JPA mappings explicitly preserve the required mixed-case table and column names 
 Updating all time deposit balances is coordinated by the application service and executed with one transaction per
 bounded worker batch.
 
+Demo seeding is implemented as an optional startup runner, not as a Flyway data migration. It is disabled by default,
+enabled with `APP_DATABASE_SEED_ENABLED=true`, deterministic, idempotent for non-empty databases, non-destructive, and
+contains only synthetic boundary-focused sample data.
+
 ## Testing
 
 The test suite contains:
@@ -223,8 +242,8 @@ HTTP requests support `X-Correlation-ID`:
 - the value is returned in the `X-Correlation-ID` response header
 - the value is included in application logs for the request
 
-The update-all balance operation logs one concise summary with operation name, processed deposit count,
-duration, and success or failure status. No external observability stack is required.
+The update-all balance operation logs one concise summary with operation name, period, processed, updated,
+alreadyProcessed, notEligible, duration, and success or failure status. No external observability stack is required.
 
 ## Security
 
@@ -260,7 +279,11 @@ Do not commit secrets, tokens, private keys, or production credentials.
 
 ## AI-Assisted Development
 
-OpenAI Codex is used as an engineering assistant. Repository-level instructions are defined in `AGENTS.md`, and reusable prompts are stored under `docs/prompts/`.
+OpenAI Codex is used as an engineering assistant for implementation, review, documentation, and test planning.
+Repository-level instructions are defined in `AGENTS.md`, and reusable prompts are stored under `docs/prompts/`.
+The architecture guide, OpenAPI contract, ERD, characterization tests, PostgreSQL/Testcontainers integration tests,
+API tests, concurrency/rollback tests, Maven build, Docker flow, and dependency/security checks are the human-reviewable
+constraints for accepting generated changes.
 
 AI-generated code is treated as a proposal and should remain understandable, testable, and maintainable by a human engineer.
 

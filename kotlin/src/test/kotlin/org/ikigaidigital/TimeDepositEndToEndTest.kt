@@ -12,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.json.JsonCompareMode
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.servlet.MockMvc
@@ -66,7 +67,7 @@ class TimeDepositEndToEndTest {
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(content().json(
                 """{"processed":0,"updated":0,"alreadyProcessed":0,"notEligible":0}""",
-                false
+                JsonCompareMode.LENIENT
             ))
 
         assertThat(countRows("timeDeposits")).isZero()

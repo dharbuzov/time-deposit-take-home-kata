@@ -14,9 +14,9 @@ import org.springframework.stereotype.Component
  */
 @Component
 class TimeDepositUpdateProperties(
-    @Value("\${app.time-deposit.update.batch-size:500}")
+    @param:Value("\${app.time-deposit.update.batch-size:500}")
     val batchSize: Int,
-    @Value("\${app.time-deposit.update.workers:4}")
+    @param:Value("\${app.time-deposit.update.workers:4}")
     val workers: Int
 ) {
     @PostConstruct

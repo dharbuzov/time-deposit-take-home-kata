@@ -4,7 +4,7 @@ server:
 app:
   database:
     seed:
-      enabled: ${APP_DATABASE_SEED_ENABLED:true}
+      enabled: ${APP_DATABASE_SEED_ENABLED:false}
   time-deposit:
     update:
       batch-size: ${APP_TIME_DEPOSIT_UPDATE_BATCH_SIZE:500}

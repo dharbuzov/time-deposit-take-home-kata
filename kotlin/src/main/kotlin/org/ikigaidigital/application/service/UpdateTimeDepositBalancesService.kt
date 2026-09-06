@@ -1,6 +1,6 @@
 package org.ikigaidigital.application.service
 
-import org.ikigaidigital.adapter.`in`.rest.CorrelationIdFilter
+import org.ikigaidigital.application.observability.CorrelationContext
 import org.ikigaidigital.application.observability.OperationTimer
 import org.ikigaidigital.application.port.`in`.UpdateTimeDepositBalancesUseCase
 import org.ikigaidigital.application.port.`in`.UpdateTimeDepositBalancesResult
@@ -36,7 +36,7 @@ class UpdateTimeDepositBalancesService(
         val timer = OperationTimer.start()
         val period = periodProvider.currentPeriod().toString()
         val upperBoundId = timeDepositPersistencePort.findMaxTimeDepositId()
-        val correlationId = MDC.get(CorrelationIdFilter.MDC_KEY)
+        val correlationId = MDC.get(CorrelationContext.MDC_KEY)
         var aggregate = TimeDepositBalanceBatchResult.EMPTY
 
         logger.info(
@@ -146,7 +146,7 @@ class UpdateTimeDepositBalancesService(
         Callable {
             try {
                 if (correlationId != null) {
-                    MDC.put(CorrelationIdFilter.MDC_KEY, correlationId)
+                    MDC.put(CorrelationContext.MDC_KEY, correlationId)
                 }
 
                 batchProcessor.processBatch(
@@ -156,7 +156,7 @@ class UpdateTimeDepositBalancesService(
                     claimedAt = clock.instant()
                 )
             } finally {
-                MDC.remove(CorrelationIdFilter.MDC_KEY)
+                MDC.remove(CorrelationContext.MDC_KEY)
             }
         }
 

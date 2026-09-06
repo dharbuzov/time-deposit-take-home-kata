@@ -1,0 +1,19 @@
+{
+  "properties": [
+    {
+      "name": "app.database.seed.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enables deterministic synthetic demo data seeding at application startup."
+    },
+    {
+      "name": "app.time-deposit.update.batch-size",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of time deposit IDs processed in one update-all worker transaction."
+    },
+    {
+      "name": "app.time-deposit.update.workers",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of bounded worker threads used by update-all balance processing."
+    }
+  ]
+}
