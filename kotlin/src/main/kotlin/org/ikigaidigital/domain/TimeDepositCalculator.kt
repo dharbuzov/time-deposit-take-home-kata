@@ -2,8 +2,6 @@ package org.ikigaidigital.domain
 
 import org.ikigaidigital.domain.interest.InterestPolicyResolver
 import org.slf4j.LoggerFactory
-import java.math.BigDecimal
-import java.math.RoundingMode
 
 class TimeDepositCalculator(
     private val interestPolicyResolver: InterestPolicyResolver = InterestPolicyResolver()
@@ -22,13 +20,15 @@ class TimeDepositCalculator(
                 return@forEach
             }
 
-            val interest = roundToCents(policy.calculateInterest(deposit.balance, deposit.days))
+            val interestAmountDouble = policy.calculateInterest(deposit.balance, deposit.days);
+            val interestAmountCents = Money.roundedToCents(interestAmountDouble);
 
-            if (interest.signum() == 0) {
+            if (interestAmountCents.isZero()) {
                 return@forEach
             }
 
-            applyInterest(deposit, interest)
+            deposit.balance += interestAmountDouble
+
             updatedDeposits++
         }
 
@@ -38,13 +38,6 @@ class TimeDepositCalculator(
             updatedDeposits,
             unsupportedPlans
         )
-    }
-
-    private fun roundToCents(amount: Double): BigDecimal =
-        BigDecimal(amount).setScale(2, RoundingMode.HALF_UP)
-
-    private fun applyInterest(deposit: TimeDeposit, interest: BigDecimal) {
-        deposit.balance += interest.toDouble()
     }
 
     companion object {
