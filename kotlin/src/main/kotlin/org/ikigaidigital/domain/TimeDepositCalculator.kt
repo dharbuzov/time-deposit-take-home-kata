@@ -20,14 +20,14 @@ class TimeDepositCalculator(
                 return@forEach
             }
 
-            val interestAmountDouble = policy.calculateInterest(deposit.balance, deposit.days);
-            val interestAmountCents = Money.roundedToCents(interestAmountDouble);
+            val interestAmountDouble = policy.calculateInterest(deposit.balance, deposit.days)
+            val roundedInterest = Money.roundedToCents(interestAmountDouble)
 
-            if (interestAmountCents.isZero()) {
+            if (roundedInterest.isZero()) {
                 return@forEach
             }
 
-            deposit.balance += interestAmountDouble
+            deposit.balance += roundedInterest.toLegacyDouble()
 
             updatedDeposits++
         }

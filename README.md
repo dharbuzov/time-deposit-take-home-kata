@@ -28,6 +28,8 @@ cd kotlin
 ./mvnw clean test
 ```
 
+GitHub Actions runs the same Maven test suite on push and pull request.
+
 Run the application directly after PostgreSQL is available:
 
 ```bash
