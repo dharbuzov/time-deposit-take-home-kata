@@ -20,6 +20,16 @@ entity "withdrawals" as withdrawals {
     * date : DATE
 }
 
+entity "time_deposit_interest_accruals" as accruals {
+    * time_deposit_id : INTEGER <<FK>>
+    * accrual_period : VARCHAR(7)
+    --
+    * created_at : TIMESTAMP
+    --
+    * UNIQUE(time_deposit_id, accrual_period)
+}
+
 timeDeposits ||--o{ withdrawals : has
+timeDeposits ||--o{ accruals : accrues
 
 @enduml

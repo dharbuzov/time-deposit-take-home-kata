@@ -19,7 +19,10 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import jakarta.persistence.EntityManagerFactory
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 
 @SpringBootTest
 @Testcontainers(disabledWithoutDocker = true)
@@ -35,6 +38,7 @@ class TimeDepositPersistenceAdapterIntegrationTest {
 
     @BeforeEach
     fun cleanDatabase() {
+        jdbcTemplate.update("DELETE FROM time_deposit_interest_accruals")
         jdbcTemplate.update("DELETE FROM withdrawals")
         jdbcTemplate.update("DELETE FROM \"timeDeposits\"")
         queryStatistics().clear()
@@ -147,6 +151,64 @@ class TimeDepositPersistenceAdapterIntegrationTest {
     }
 
     @Test
+    fun `monthly claim uses database uniqueness for duplicate periods`() {
+        insertTimeDeposit(1, "basic", 31, BigDecimal("1200.25"))
+
+        val firstClaim = adapter.tryClaimMonthlyInterest(1, "2026-09", Instant.parse("2026-09-05T00:00:00Z"))
+        val duplicateClaim = adapter.tryClaimMonthlyInterest(1, "2026-09", Instant.parse("2026-09-05T00:00:01Z"))
+
+        assertThat(firstClaim).isTrue()
+        assertThat(duplicateClaim).isFalse()
+        assertThat(accrualCount()).isEqualTo(1)
+    }
+
+    @Test
+    fun `concurrent monthly claims allow exactly one insert`() {
+        insertTimeDeposit(1, "basic", 31, BigDecimal("1200.25"))
+        val executor = Executors.newFixedThreadPool(2)
+        val ready = CountDownLatch(2)
+        val start = CountDownLatch(1)
+
+        try {
+            val attempts = List(2) {
+                executor.submit<Boolean> {
+                    ready.countDown()
+                    start.await()
+                    adapter.tryClaimMonthlyInterest(1, "2026-09", Instant.parse("2026-09-05T00:00:00Z"))
+                }
+            }
+
+            ready.await()
+            start.countDown()
+
+            assertThat(attempts.count { it.get() }).isEqualTo(1)
+            assertThat(accrualCount()).isEqualTo(1)
+        } finally {
+            executor.shutdownNow()
+        }
+    }
+
+    @Test
+    fun `database contains unique monthly accrual constraint`() {
+        val uniqueColumns = jdbcTemplate.queryForList(
+            """
+            SELECT a.attname
+            FROM pg_constraint c
+            JOIN pg_class t ON t.oid = c.conrelid
+            JOIN unnest(c.conkey) WITH ORDINALITY AS cols(attnum, ordinality) ON true
+            JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = cols.attnum
+            WHERE t.relname = 'time_deposit_interest_accruals'
+              AND c.conname = 'uq_time_deposit_interest_accrual'
+              AND c.contype = 'u'
+            ORDER BY cols.ordinality
+            """.trimIndent(),
+            String::class.java
+        )
+
+        assertThat(uniqueColumns).containsExactly("time_deposit_id", "accrual_period")
+    }
+
+    @Test
     fun `replaces persisted balances without changing other deposit fields`() {
         insertTimeDeposit(1, "basic", 31, BigDecimal("1200.25"))
         insertTimeDeposit(2, "premium", 46, BigDecimal("3300.75"))
@@ -190,6 +252,12 @@ class TimeDepositPersistenceAdapterIntegrationTest {
 
     private fun queryStatistics() =
         entityManagerFactory.unwrap(SessionFactory::class.java).statistics
+
+    private fun accrualCount(): Int =
+        jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM time_deposit_interest_accruals",
+            Int::class.java
+        ) ?: 0
 
     companion object {
         @Container

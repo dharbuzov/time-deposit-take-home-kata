@@ -22,6 +22,8 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 import java.math.BigDecimal
+import java.sql.Timestamp
+import java.time.Instant
 
 @SpringBootTest
 @Testcontainers(disabledWithoutDocker = true)
@@ -34,6 +36,7 @@ class UpdateTimeDepositBalancesTransactionIntegrationTest {
 
     @BeforeEach
     fun cleanDatabase() {
+        jdbcTemplate.update("DELETE FROM time_deposit_interest_accruals")
         jdbcTemplate.update("DELETE FROM withdrawals")
         jdbcTemplate.update("DELETE FROM \"timeDeposits\"")
     }
@@ -49,6 +52,7 @@ class UpdateTimeDepositBalancesTransactionIntegrationTest {
 
         assertThat(balanceFor(1)).isEqualByComparingTo("1200.00")
         assertThat(balanceFor(2)).isEqualByComparingTo("1200.00")
+        assertThat(accrualCount()).isZero()
     }
 
     private fun insertTimeDeposit(id: Int, planType: String, days: Int, balance: BigDecimal) {
@@ -67,6 +71,12 @@ class UpdateTimeDepositBalancesTransactionIntegrationTest {
             BigDecimal::class.java,
             id
         )
+
+    private fun accrualCount(): Int =
+        jdbcTemplate.queryForObject(
+            "SELECT COUNT(*) FROM time_deposit_interest_accruals",
+            Int::class.java
+        ) ?: 0
 
     @TestConfiguration
     class FailingPersistencePortConfiguration {
@@ -88,6 +98,31 @@ class UpdateTimeDepositBalancesTransactionIntegrationTest {
                         totalElements = 2,
                         totalPages = 1
                     )
+
+                override fun findMaxTimeDepositId(): Int? =
+                    2
+
+                override fun findNextTimeDepositIds(lastId: Int, upperBoundId: Int, limit: Int): List<Int> =
+                    if (lastId == 0) listOf(1, 2) else emptyList()
+
+                override fun findByIds(timeDepositIds: List<Int>): List<TimeDepositAccount> =
+                    findAllWithWithdrawals().filter { it.id in timeDepositIds }
+
+                override fun tryClaimMonthlyInterest(
+                    timeDepositId: Int,
+                    accrualPeriod: String,
+                    createdAt: Instant
+                ): Boolean =
+                    jdbcTemplate.update(
+                        """
+                        INSERT INTO time_deposit_interest_accruals(time_deposit_id, accrual_period, created_at)
+                        VALUES (?, ?, ?)
+                        ON CONFLICT (time_deposit_id, accrual_period) DO NOTHING
+                        """.trimIndent(),
+                        timeDepositId,
+                        accrualPeriod,
+                        Timestamp.from(createdAt)
+                    ) == 1
 
                 override fun replaceBalances(balances: List<TimeDepositBalance>) {
                     jdbcTemplate.update(

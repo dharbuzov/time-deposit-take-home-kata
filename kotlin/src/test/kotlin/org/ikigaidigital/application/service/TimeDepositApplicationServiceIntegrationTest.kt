@@ -33,6 +33,7 @@ class TimeDepositApplicationServiceIntegrationTest {
 
     @BeforeEach
     fun cleanDatabase() {
+        jdbcTemplate.update("DELETE FROM time_deposit_interest_accruals")
         jdbcTemplate.update("DELETE FROM withdrawals")
         jdbcTemplate.update("DELETE FROM \"timeDeposits\"")
     }
@@ -64,8 +65,12 @@ class TimeDepositApplicationServiceIntegrationTest {
 
     @Test
     fun `update all does nothing when no deposits exist`() {
-        updateTimeDepositBalancesUseCase.updateTimeDepositBalances()
+        val result = updateTimeDepositBalancesUseCase.updateTimeDepositBalances()
 
+        assertThat(result.processed).isZero()
+        assertThat(result.updated).isZero()
+        assertThat(result.alreadyProcessed).isZero()
+        assertThat(result.notEligible).isZero()
         assertThat(getTimeDepositsUseCase.getTimeDeposits(defaultRequest()).content).isEmpty()
     }
 
@@ -77,10 +82,14 @@ class TimeDepositApplicationServiceIntegrationTest {
         insertTimeDeposit(4, "gold", 46, BigDecimal("1200.00"))
         insertWithdrawal(10, 3, BigDecimal("50.00"), LocalDate.of(2026, 9, 4))
 
-        updateTimeDepositBalancesUseCase.updateTimeDepositBalances()
+        val result = updateTimeDepositBalancesUseCase.updateTimeDepositBalances()
 
         val deposits = getTimeDepositsUseCase.getTimeDeposits(defaultRequest()).content
 
+        assertThat(result.processed).isEqualTo(4)
+        assertThat(result.updated).isEqualTo(3)
+        assertThat(result.alreadyProcessed).isZero()
+        assertThat(result.notEligible).isEqualTo(1)
         assertThat(deposits[0].balance).isEqualByComparingTo("1201.00")
         assertThat(deposits[1].balance).isEqualByComparingTo("1203.00")
         assertThat(deposits[2].balance).isEqualByComparingTo("1205.00")

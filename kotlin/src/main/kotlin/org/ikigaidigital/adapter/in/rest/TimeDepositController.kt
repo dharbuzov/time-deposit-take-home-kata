@@ -5,12 +5,10 @@ import org.ikigaidigital.application.port.`in`.UpdateTimeDepositBalancesUseCase
 import org.ikigaidigital.adapter.`in`.rest.PageRequestMapper.DEFAULT_PAGE
 import org.ikigaidigital.adapter.`in`.rest.PageRequestMapper.DEFAULT_SIZE
 import org.ikigaidigital.adapter.`in`.rest.PageRequestMapper.DEFAULT_SORT
-import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -30,8 +28,6 @@ class TimeDepositController(
         )
 
     @PostMapping("/balances")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    fun updateTimeDepositBalances() {
-        updateTimeDepositBalancesUseCase.updateTimeDepositBalances()
-    }
+    fun updateTimeDepositBalances(): UpdateTimeDepositBalancesResponse =
+        TimeDepositResponseMapper.toResponse(updateTimeDepositBalancesUseCase.updateTimeDepositBalances())
 }

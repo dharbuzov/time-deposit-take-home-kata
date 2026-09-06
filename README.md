@@ -7,6 +7,7 @@ Implementation of the XA Bank Time Deposit take-home assignment.
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
 - [API](#api)
+- [Assumptions / Design Decisions](#assumptions--design-decisions)
 - [Architecture](#architecture)
 - [Database](#database)
 - [Testing](#testing)
@@ -97,7 +98,7 @@ curl "http://localhost:8080/time-deposits?page=0&size=20&sort=id,asc"
 curl -X POST -i http://localhost:8080/time-deposits/balances
 ```
 
-`POST /time-deposits/balances` returns `204 No Content` when the update succeeds.
+`POST /time-deposits/balances` returns `200 OK` with a processing summary when the update succeeds.
 
 ## Assumptions / Design Decisions
 
@@ -109,6 +110,40 @@ predictable while preserving access to the complete dataset across pages.
 
 `offset` is not exposed separately because page-based pagination already derives it internally as `page * size`,
 and exposing both would create ambiguous semantics.
+
+### Bulk Balance Update Design
+
+Updating every time deposit through an unbounded `findAll()` makes memory consumption and transaction size grow with
+the complete table. The implementation therefore traverses deposit IDs in bounded keyset batches using an operation
+start upper bound. Deposits inserted after the run starts are intentionally left for the next invocation.
+
+Batches can be processed independently, so a small bounded worker pool improves throughput while keeping database
+pressure controlled. The default worker count is deliberately below the default Hikari maximum pool size, leaving
+connection headroom for request handling and other database work.
+
+One transaction across the complete dataset would create a long-running transaction with large rollback scope and
+prolonged resource retention. Each worker batch therefore executes in its own transaction. Successfully committed
+batches remain committed if a later batch fails; a retry is safe because already committed eligible deposits are
+rejected by the monthly unique claim while the failed batch's rolled-back claims are available again.
+
+`days` is part of the supplied business rules and determines whether a deposit is currently eligible for interest. The
+calculator applies a monthly interest amount (`annualRate / 12`), therefore idempotency is tracked separately by
+calendar accrual period. `days` is not used as the idempotency key.
+
+An ineligible deposit must not consume its monthly accrual slot. For example, a Premium deposit at day 45 is not
+eligible, but at day 46 it becomes eligible. Therefore the system checks `days` eligibility first and only then attempts
+the monthly claim.
+
+Monthly processing metadata is infrastructure state rather than part of the protected `TimeDeposit` model. It is stored
+in a dedicated technical table and does not modify the assignment's existing `timeDeposits` schema.
+
+`UNIQUE(time_deposit_id, accrual_period)` is the atomic idempotency and concurrency invariant. It prevents duplicate
+monthly application across repeated HTTP requests, concurrent worker threads, and multiple application instances. The
+claim and balance change are part of the same batch transaction. If the batch fails, both are rolled back, allowing the
+failed work to be safely retried.
+
+Database uniqueness already provides the required cross-thread and cross-instance correctness, so JVM or distributed
+locks would add complexity without improving the invariant.
 
 ## Architecture
 
@@ -154,7 +189,8 @@ The schema is based on `docs/erd.puml`.
 
 The outbound persistence adapter uses Spring Data JPA with persistence-specific entities.
 JPA mappings explicitly preserve the required mixed-case table and column names from the assignment.
-Updating all time deposit balances is orchestrated by the application service inside one Spring transaction.
+Updating all time deposit balances is coordinated by the application service and executed with one transaction per
+bounded worker batch.
 
 ## Testing
 

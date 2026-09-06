@@ -48,6 +48,7 @@ class TimeDepositEndToEndTest {
 
     @BeforeEach
     fun cleanDatabase() {
+        jdbcTemplate.update("DELETE FROM time_deposit_interest_accruals")
         jdbcTemplate.update("DELETE FROM withdrawals")
         jdbcTemplate.update("DELETE FROM \"timeDeposits\"")
     }
@@ -61,8 +62,12 @@ class TimeDepositEndToEndTest {
             .andExpect(content().json("""{"content":[],"page":0,"size":20,"totalElements":0,"totalPages":0}"""))
 
         mockMvc.perform(post("/time-deposits/balances"))
-            .andExpect(status().isNoContent)
-            .andExpect(content().string(""))
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(content().json(
+                """{"processed":0,"updated":0,"alreadyProcessed":0,"notEligible":0}""",
+                false
+            ))
 
         assertThat(countRows("timeDeposits")).isZero()
         assertThat(countRows("withdrawals")).isZero()
@@ -139,8 +144,8 @@ class TimeDepositEndToEndTest {
         val originalWithdrawalDate = withdrawalDate(10)
 
         mockMvc.perform(post("/time-deposits/balances"))
-            .andExpect(status().isNoContent)
-            .andExpect(content().string(""))
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 
         val body = mockMvc.perform(get("/time-deposits"))
             .andExpect(status().isOk)
@@ -207,13 +212,14 @@ class TimeDepositEndToEndTest {
         assertThat(contract).contains("'200':")
         assertThat(contract).contains("/time-deposits/balances:")
         assertThat(contract).contains("post:")
-        assertThat(contract).contains("'204':")
+        assertThat(contract).contains("'200':")
         assertThat(contract).contains("- name: page")
         assertThat(contract).contains("- name: size")
         assertThat(contract).contains("- name: sort")
         assertThat(contract).contains("TimeDepositPageResponse:")
         assertThat(contract).contains("TimeDepositResponse:")
         assertThat(contract).contains("WithdrawalResponse:")
+        assertThat(contract).contains("UpdateTimeDepositBalancesResponse:")
     }
 
     private fun endpointSignatures(mappingInfo: RequestMappingInfo): List<String> {
@@ -248,7 +254,7 @@ class TimeDepositEndToEndTest {
     }
 
     private fun countRows(tableName: String): Int =
-        jdbcTemplate.queryForObject("SELECT COUNT(*) FROM \"$tableName\"", Int::class.java) ?: 0
+        jdbcTemplate.queryForObject("SELECT COUNT(*) FROM \"${tableName}\"", Int::class.java) ?: 0
 
     private fun balanceFor(id: Int): BigDecimal? =
         jdbcTemplate.queryForObject(

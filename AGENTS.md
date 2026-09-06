@@ -112,6 +112,23 @@ Avoid partial updates when the business operation is expected to succeed or fail
 
 Keep lock scope minimal. Never hold locks across unnecessary slow or external operations.
 
+For update-all time deposit balance processing:
+
+- Never use unconditional `findAll()` for update-all.
+- Process deposits in bounded batches.
+- Use bounded workers only; do not use `parallelStream()` for this flow.
+- Open the worker transaction through a separate Spring bean.
+- Never pass JPA entities between workers.
+- Evaluate `days` eligibility before attempting the monthly claim.
+- Ineligible deposits must not create accrual rows.
+- Never implement check-then-insert for claims.
+- Preserve `UNIQUE(time_deposit_id, accrual_period)`.
+- Keep claim and balance update atomic in one batch transaction.
+- Do not add JVM or distributed locks for this invariant.
+- Use deterministic time in tests.
+- Cover concurrency and rollback semantics with PostgreSQL/Testcontainers.
+- Comments should explain invariants and trade-offs, not restate obvious code.
+
 ## Persistence
 
 - Keep persistence concerns outside the domain.

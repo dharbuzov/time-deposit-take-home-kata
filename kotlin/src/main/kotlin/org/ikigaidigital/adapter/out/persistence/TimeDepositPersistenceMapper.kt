@@ -7,6 +7,9 @@ object TimeDepositPersistenceMapper {
     fun toDomain(entity: TimeDepositEntity): TimeDepositAccount =
         toDomain(entity, entity.withdrawals)
 
+    fun toDomainWithoutWithdrawals(entity: TimeDepositEntity): TimeDepositAccount =
+        toDomain(entity, emptyList())
+
     fun toDomain(entity: TimeDepositEntity, withdrawals: List<WithdrawalEntity>): TimeDepositAccount =
         TimeDepositAccount(
             id = entity.id!!,

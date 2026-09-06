@@ -35,6 +35,7 @@ class TimeDepositControllerIntegrationTest {
 
     @BeforeEach
     fun cleanDatabase() {
+        jdbcTemplate.update("DELETE FROM time_deposit_interest_accruals")
         jdbcTemplate.update("DELETE FROM withdrawals")
         jdbcTemplate.update("DELETE FROM \"timeDeposits\"")
     }
@@ -154,8 +155,13 @@ class TimeDepositControllerIntegrationTest {
         insertWithdrawal(10, 3, BigDecimal("50.00"), LocalDate.of(2026, 9, 4))
 
         mockMvc.perform(post("/time-deposits/balances"))
-            .andExpect(status().isNoContent)
-            .andExpect(content().string(""))
+            .andExpect(status().isOk)
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+            .andExpect(jsonPath("$.period").isString)
+            .andExpect(jsonPath("$.processed").value(3))
+            .andExpect(jsonPath("$.updated").value(3))
+            .andExpect(jsonPath("$.alreadyProcessed").value(0))
+            .andExpect(jsonPath("$.notEligible").value(0))
 
         mockMvc.perform(get("/time-deposits"))
             .andExpect(status().isOk)

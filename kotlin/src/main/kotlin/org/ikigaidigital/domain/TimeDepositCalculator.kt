@@ -16,9 +16,10 @@ class TimeDepositCalculator {
             val policy = interestPolicyResolver.resolve(xs[i].planType)
             if (policy == null) {
                 unsupportedPlans++
+                continue
             }
 
-            val interest = policy?.calculateInterest(xs[i].balance, xs[i].days) ?: 0.0
+            val interest = policy.calculateInterest(xs[i].balance, xs[i].days) ?: 0.0
             val interestAmountRounded = BigDecimal(interest).setScale(2, RoundingMode.HALF_UP)
             // Increase the balance by interest amount rounded to 2 decimal places
             xs[i].balance += interestAmountRounded.toDouble()

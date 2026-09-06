@@ -19,6 +19,9 @@ class InterestPolicyResolver(
         return policy
     }
 
+    fun isEligible(planType: String, days: Int): Boolean =
+        resolve(planType)?.isEligible(days) ?: false
+
     companion object {
         private val logger = LoggerFactory.getLogger(InterestPolicyResolver::class.java)
     }

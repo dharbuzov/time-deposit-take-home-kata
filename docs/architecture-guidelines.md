@@ -134,6 +134,22 @@ Rules:
 - Do not add Saga, TCC, 2PC, outbox, or similar patterns unless requirements justify them.
 - Preserve domain invariants inside the transaction.
 
+For update-all balance processing:
+
+- Use bounded batches; never update the complete table through unconditional `findAll()`.
+- Traverse work with keyset ID queries rather than `OFFSET`.
+- Capture an operation `upperBoundId`; deposits inserted later are handled by a future run.
+- Use bounded worker concurrency, with worker count kept below the database connection pool size.
+- Open one transaction per batch in a separate worker bean so Spring applies transactional proxying.
+- Pass immutable IDs to workers, not JPA entities.
+- Check `days` eligibility before attempting the monthly accrual claim.
+- Do not create accrual rows for ineligible deposits.
+- Use calendar month only for idempotency, not for business eligibility.
+- Acquire claims with an atomic database insert guarded by `UNIQUE(time_deposit_id, accrual_period)`.
+- Keep claim and balance update in the same batch transaction.
+- Treat committed batches as durable on later-batch failure; retries are safe because failed-batch claims roll back.
+- Do not use JVM or distributed locks for this invariant.
+
 ## Concurrency and Locking
 
 Do not add locks preemptively.

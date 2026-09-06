@@ -1,6 +1,7 @@
 package org.ikigaidigital.adapter.`in`.rest
 
 import org.ikigaidigital.application.port.`in`.PageResult
+import org.ikigaidigital.application.port.`in`.UpdateTimeDepositBalancesResult
 import org.ikigaidigital.domain.TimeDepositAccount
 import org.ikigaidigital.domain.Withdrawal
 
@@ -31,5 +32,14 @@ object TimeDepositResponseMapper {
             id = withdrawal.id,
             amount = withdrawal.amount,
             date = withdrawal.date
+        )
+
+    fun toResponse(result: UpdateTimeDepositBalancesResult): UpdateTimeDepositBalancesResponse =
+        UpdateTimeDepositBalancesResponse(
+            period = result.period,
+            processed = result.processed,
+            updated = result.updated,
+            alreadyProcessed = result.alreadyProcessed,
+            notEligible = result.notEligible
         )
 }
