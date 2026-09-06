@@ -1,5 +1,7 @@
 # XA Bank Time Deposit
 
+[![CI](https://github.com/dharbuzov/time-deposit-take-home-kata/actions/workflows/ci.yml/badge.svg)](https://github.com/dharbuzov/time-deposit-take-home-kata/actions/workflows/ci.yml)
+
 Kotlin/Spring Boot implementation of the XA Bank Time Deposit take-home assignment.
 
 The service exposes two business endpoints: one paginated read endpoint for time deposits and one command endpoint that
